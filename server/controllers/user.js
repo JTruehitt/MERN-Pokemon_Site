@@ -10,7 +10,7 @@ const getUser = async (req, res) => {
     if (!user) {
       res
         .status(404)
-        .json({ 'Not Found': `No user with username ${username}` });
+        throw new Error(`No user with username ${username} was found`);
     }
     res.status(200).json({
       _id: user._id,
@@ -18,8 +18,8 @@ const getUser = async (req, res) => {
       email: user.email,
       createdAt: user.createdAt,
     });
-  } catch (error) {
-    res.status(500).json({ 'Server Error': error.message });
+  } catch (err) {
+    next(err);
   }
 };
 
@@ -32,7 +32,8 @@ const registerUser = async (req, res) => {
     const user = await User.create({ username, email, password });
 
     if (!user) {
-      res.status(400).json({ 'Bad Request': 'Invalid user data' });
+      res.status(400)
+        throw new Error('Invalid user data');
     }
     // Send back user data without password
     res.status(201).json({
@@ -41,15 +42,15 @@ const registerUser = async (req, res) => {
       email: user.email,
       createdAt: user.createdAt,
     });
-  } catch (error) {
-    res.status(500).json({ 'Server Error': error.message });
+  } catch (err) {
+    next(err);
   }
 };
 
 // @desc   Update a user
 // @route  PUT /api/users/:username
 // @access Private
-const updateUser = async (req, res) => {
+const updateUser = async (req, res, next) => {
   try {
     const { username, email } = req.body;
     const userData = await User.findOneAndUpdate(
@@ -66,8 +67,7 @@ const updateUser = async (req, res) => {
     if (!userData) {
       res
         .status(404)
-        .json({ 'Not Found': `No user with username ${username}` });
-      return;
+        throw new Error(`No user with username ${username} was found`);
     }
     res.status(200).json({
       _id: userData._id,
@@ -77,7 +77,7 @@ const updateUser = async (req, res) => {
       updatedAt: userData.updatedAt,
     });
   } catch (err) {
-    res.status(500).json({ 'Server Error': err.message });
+    next(err);
   }
 };
 
@@ -93,13 +93,12 @@ const deleteUser = async (req, res) => {
     if (!userConfirmed) {
       res
         .status(404)
-        .json({ 'Not Found': `No user with username ${username}` });
-      return;
+        throw new Error(`No user with username ${username} was found`);
     }
     const correctPassword = await userConfirmed.checkPassword(password);
     if (!correctPassword) {
-      res.status(401).json({ Unauthorized: 'Incorrect password' });
-      return;
+      res.status(401)
+      throw new Error('Incorrect password');
     }
     const deletedUser = await User.findOneAndDelete({ username });
     res.status(200).json({
@@ -110,8 +109,7 @@ const deleteUser = async (req, res) => {
       updatedAt: deletedUser.updatedAt,
     });
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ 'Server Error': err.message });
+    next(err);
   }
 };
 

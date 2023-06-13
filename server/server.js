@@ -1,6 +1,7 @@
 import express from 'express';
 import connectDB from './config/connection.js';
 import routes from './routes/user-routes.js';
+import errorHandler from './middleware/errorHandler.js';
 
 const app = express();
 const PORT = process.env.PORT || 3018;
@@ -13,6 +14,8 @@ app.use('/api', routes);
 app.use((req, res) => {
   res.status(404).send('404: Page not found');
 });
+
+app.use(errorHandler);
 
 (async () => {
   try {
